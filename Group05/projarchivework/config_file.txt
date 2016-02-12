@@ -1,56 +1,0 @@
-# Defines which nodes are used in the system and how to connect to them.
-# This element should only be referenced during the constructor's initial
-# setup.
-# All names must be unique.
-# No other nodes are known.
-# These names will be used for src and dest addresses for the Message
-# The local node’s name is included in this list
-configuration:
-    - name : alice
-      #ip : 192.168.1.52
-      ip: 54.67.11.238
-      port : 12345 # This is the incoming port on which MP will listen
-      # May be changed for further communication as usual
-    - name : bob
-      #ip : 192.168.1.112
-      ip: 54.67.11.238
-      port : 14255
-    - name : charlie
-      ip : 54.183.203.194
-      port : 12998
-    - name : daphnie
-      ip : 54.183.203.194
-      port : 1987
-    - name : logger
-      ip: 192.168.1.88
-      port: 14322
-
-sendRules :
-    - action : drop # Ack message number 4 from bob to alice will not be sent
-      src : bob
-      dest : alice
-      kind : Ack
-      seqNum : 8
-    - action : dropAfter # Daphnie will stop sending Reply messages after seq#6
-      kind : Reply
-      src : daphnie
-      seqNum : 6
-    - action : delay # Everyone sees two copies of charlie's messages
-      src : charlie # even though he only sends one
-
-
-receiveRules :
-    - action : drop # Ack message number 4 from bob to alice will not be sent
-      src : alice
-      dest : daphnie
-      kind : Ack
-      seqNum : 10
-    - action : dropAfter # Ack message number 4 from bob to alice will not be sent
-      src : alice
-      dest : daphnie
-      kind : Reply
-      seqNum : 13
-    - action : delay # Everyone sees two copies of charlie's messages
-      src : charlie # even though he only sends one
-groups :  - name : Group1    members :      - alice
-      - bob      - charlie  - name : Group2    members :      - daphnie      - bob      - charlie# A single, top-level section in the YAML file# Group names must be unique# Any number of members in the group# As many groups as you like
