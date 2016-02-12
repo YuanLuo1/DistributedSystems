@@ -1,0 +1,126 @@
+/**
+ * 
+ */
+package commInfra;
+
+import java.io.*;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
+
+import com.dropbox.core.DbxException;
+
+/**
+ * @author YuanLuo
+ *
+ */
+public class MessagePasserOld {
+	
+	String  configFile;
+	String  local_name;
+	int     seqNum;
+	Message msg;
+	ArrayList<Message> msgList=null;
+	Socket client;
+	
+	/**
+	 * 
+	 * @param configFile
+	 * @param local_name
+	 */
+	
+	public MessagePasserOld(String configFile, String local_name) {
+		this.configFile=configFile;
+		this.local_name=local_name;
+		seqNum         =0;
+	}
+	
+	void send(Message msg) {
+		try {
+			ConfigurationManger cm = new ConfigurationManger(configFile,local_name);
+			RulesEngine re = new RulesEngine(cm);
+			Map<String,List> config_dict = cm.checkForUpdates();
+			List host_config= config_dict.get(local_name);
+			String ip = host_config.get(0).toString();
+			int port = Integer.parseInt(host_config.get(1).toString());
+			client = new Socket(ip, port);
+			this.msg=msg;
+			msg.set_seqNum(seqNum);
+			seqNum++;
+			msg.set_source(local_name);
+			Writer writer = new OutputStreamWriter(client.getOutputStream());
+			writer.write(msg.data);
+	        writer.flush();
+	        writer.close();
+	        client.close();
+			msgList = re.applySendRules(msg);
+			
+			} 
+			catch (FileNotFoundException e) {
+				System.out.println("Configuration File not Found. Initialization failed");
+				e.printStackTrace();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (DbxException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		
+	}
+	
+	Message receive( ) {
+		try {
+			ConfigurationManger cm = new ConfigurationManger(configFile,local_name);
+			RulesEngine re = new RulesEngine(cm);
+			Map<String,List> config_dict = cm.checkForUpdates();
+			List host_config= config_dict.get(local_name);
+			String ip = host_config.get(0).toString();
+			int port = Integer.parseInt(host_config.get(1).toString());
+			ServerSocket server = new ServerSocket(port);
+            Socket socket = server.accept();
+            Reader reader = new InputStreamReader(socket.getInputStream());
+            char chars[] = new char[1024];
+            int len;
+            StringBuilder builder = new StringBuilder();
+            while ((len=reader.read(chars)) != -1) {
+           builder.append(new String(chars, 0, len));
+            }
+            System.out.println("Receive from client message=: " + builder);
+            reader.close();
+            socket.close();
+            server.close();
+			msg=msgList.get(0);
+			re.applyReceiveRules(msg);
+			Message msg1 = re.getRcvdMsg();
+			System.out.println(msg1.toString());
+		} 
+		catch (FileNotFoundException e) {
+			System.out.println("Configuration File not Found. Initialization failed");
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DbxException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+			
+		return null;
+	} // may block. Doesn't have to.
+	
+	public static void main(String[] args) throws IOException, DbxException {
+		//Msg from alice to charlie
+		Message msg = new Message("charlie","Request",null);
+		MessagePasserOld mpser = new MessagePasserOld("config_file.txt","alice");
+		mpser.send(msg);
+		MessagePasserOld mpserRcv = new MessagePasserOld("config_file.txt","charlie");
+		Message rcv = mpserRcv.receive();
+		//Msg from alice to bob
+		Message msg1 = new Message("bob","Request",null);
+		MessagePasserOld mpser1 = new MessagePasserOld("config_file.txt","alice");
+		mpser.send(msg1);
+		MessagePasserOld mpserRcv1 = new MessagePasserOld("config_file.txt","bob");
+		Message rcv1 = mpserRcv.receive();
+	}
+}
