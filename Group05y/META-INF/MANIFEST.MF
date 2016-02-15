@@ -1,7 +1,0 @@
-Manifest-Version: 1.0
-Rsrc-Class-Path: ./ snakeyaml-1.5.jar dropbox-core-sdk-1.8.2.jar jacks
- on-core-2.6.1.jar
-Class-Path: .
-Rsrc-Main-Class: commInfra.TestApplication
-Main-Class: org.eclipse.jdt.internal.jarinjarloader.JarRsrcLoader
-
