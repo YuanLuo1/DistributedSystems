@@ -8,36 +8,33 @@
 configuration:
     - name : alice
       #ip : 192.168.1.52
-      ip: 128.2.13.144
+      ip: 128.2.13.134
       port : 12345 # This is the incoming port on which MP will listen
       # May be changed for further communication as usual
     - name : bob
-      #ip : 192.168.1.112
-      ip: 128.2.13.144
+      ip: 128.2.13.145
       port : 14255
     - name : charlie
-      ip : 128.2.13.145
+      ip : 128.2.13.144
       port : 12998
     - name : daphnie
-      ip : 128.2.13.133
+      ip : 128.2.13.137
       port : 1987
     - name : logger
-      ip: 128.2.13.145
+      ip: 128.2.13.161
       port: 14322
 
 sendRules :
-    - action : drop # Ack message number 4 from bob to alice will not be sent
-      src : bob
-      dest : alice
-      kind : Ack
+    - action : delay
+      src : alice
+      kind : delay
+    - action : drop
+      src : alice
+      kind : drop
+    - action : dropAfter
+      src : alice
+      kind : dropAfter
       seqNum : 8
-    - action : dropAfter # Daphnie will stop sending Reply messages after seq#6
-      kind : Reply
-      src : daphnie
-      seqNum : 6
-    - action : delay # Everyone sees two copies of charlie's messages
-      src : charlie # even though he only sends one
-
 
 receiveRules :
     - action : drop # Ack message number 4 from bob to alice will not be sent
